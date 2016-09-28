@@ -25,9 +25,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sort"
 	"syscall"
 
-	"github.com/maruel/panicparse/stack"
+	"github.com/dmbreaker/panicparse/stack"
 	"github.com/mattn/go-colorable"
 	"github.com/mattn/go-isatty"
 	"github.com/mgutz/ansi"
@@ -55,7 +56,7 @@ var defaultPalette = stack.Palette{
 }
 
 // process copies stdin to stdout and processes any "panic: " line found.
-func process(in io.Reader, out io.Writer, p *stack.Palette, s stack.Similarity, fullPath, parse bool) error {
+func process(in io.Reader, out io.Writer, p *stack.Palette, s stack.Similarity, minCount int, sortByCount bool, fullPath, parse bool) error {
 	goroutines, err := stack.ParseDump(in, out)
 	if err != nil {
 		return err
@@ -68,9 +69,14 @@ func process(in io.Reader, out io.Writer, p *stack.Palette, s stack.Similarity, 
 	}
 	buckets := stack.SortBuckets(stack.Bucketize(goroutines, s))
 	srcLen, pkgLen := stack.CalcLengths(buckets, fullPath)
+	if sortByCount {
+		sort.Sort(stack.ByGoroutinesCount(buckets))
+	}
 	for _, bucket := range buckets {
-		_, _ = io.WriteString(out, p.BucketHeader(&bucket, fullPath, len(buckets) > 1))
-		_, _ = io.WriteString(out, p.StackLines(&bucket.Signature, srcLen, pkgLen, fullPath))
+		if len(bucket.Routines) > minCount {
+			_, _ = io.WriteString(out, p.BucketHeader(&bucket, fullPath, len(buckets) > 1))
+			_, _ = io.WriteString(out, p.StackLines(&bucket.Signature, srcLen, pkgLen, fullPath))
+		}
 	}
 	return err
 }
@@ -100,6 +106,8 @@ func Main() error {
 	forceColor := flag.Bool("force-color", false, "Forcibly enable coloring when with stdout is redirected")
 	parse := flag.Bool("parse", true, "Parses source files to deduct types; use -parse=false to work around bugs in source parser")
 	verboseFlag := flag.Bool("v", false, "Enables verbose logging output")
+	mincount := flag.Int("mincount", 0, "Minimum count of similar goroutines to display")
+	sortByCount := flag.Bool("bycount", false, "Sorts goroutines buckets by count")
 	flag.Parse()
 
 	log.SetFlags(log.Lmicroseconds)
@@ -135,5 +143,5 @@ func Main() error {
 	default:
 		return errors.New("pipe from stdin or specify a single file")
 	}
-	return process(in, out, p, s, *fullPath, *parse)
+	return process(in, out, p, s, *mincount, *sortByCount, *fullPath, *parse)
 }

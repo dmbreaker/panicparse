@@ -600,6 +600,20 @@ func (b Buckets) Swap(i, j int) {
 	b[j], b[i] = b[i], b[j]
 }
 
+type ByGoroutinesCount Buckets
+
+func (b ByGoroutinesCount) Len() int {
+	return len(b)
+}
+
+func (b ByGoroutinesCount) Less(i, j int) bool {
+	return len(b[i].Routines) > len(b[j].Routines)
+}
+
+func (b ByGoroutinesCount) Swap(i, j int) {
+	b[j], b[i] = b[i], b[j]
+}
+
 // SortBuckets creates a list of Bucket from each goroutine stack trace count.
 func SortBuckets(buckets map[*Signature][]Goroutine) Buckets {
 	out := make(Buckets, 0, len(buckets))

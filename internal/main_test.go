@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/maruel/panicparse/stack"
+	"github.com/dmbreaker/panicparse/stack"
 	"github.com/maruel/ut"
 )
 

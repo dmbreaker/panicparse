@@ -32,7 +32,7 @@ Features
 Installation
 ------------
 
-    go get github.com/maruel/panicparse/cmd/pp
+    go get github.com/dmbreaker/panicparse/cmd/pp
 
 
 Usage
@@ -120,4 +120,4 @@ done that.
 
 You may have the Perl PAR Packager installed. Use long name `panicparse` then;
 
-    go get github.com/maruel/panicparse
+    go get github.com/dmbreaker/panicparse
